@@ -27,12 +27,14 @@ A lightweight, distraction-free KDE Plasma 6 widget (Plasmoid) to display and tr
 ## Getting Started
 
 ### 1. Enable Local REST API in Super Productivity
+
 1. Open **Super Productivity**.
-2. Go to **Settings** -> **Miscellaneous**.
-3. Toggle on **Local REST API** (default port: `3876`).
+2. Go to **Settings** -> **Misc Settings**.
+3. Toggle on **Enable local REST API** (default port: `3876`).
    > The auth token is automatically generated and stored at `~/.config/superProductivity/local-rest-api-token`.
 
 ### 2. Install the Widget
+
 Clone this repository and run the install script:
 
 ```bash
@@ -42,6 +44,7 @@ cd super-productivity-plasma-widget
 ```
 
 Or manually link the plasmoid directory:
+
 ```bash
 mkdir -p ~/.local/share/plasma/plasmoids
 ln -sfn "$(pwd)/org.kde.plasma.superproductivity" ~/.local/share/plasma/plasmoids/org.kde.plasma.superproductivity
@@ -49,6 +52,7 @@ systemctl --user restart plasma-plasmashell.service
 ```
 
 ### 3. Add to Panel
+
 1. Right-click on your KDE Panel -> select **Enter Edit Mode**.
 2. Click **Add Widgets...**
 3. Search for **Super Productivity Pomodoro**.
