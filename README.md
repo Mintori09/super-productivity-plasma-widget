@@ -62,4 +62,4 @@ systemctl --user restart plasma-plasmashell.service
 
 ## License
 
-GPL-2.0-or-later
+MIT

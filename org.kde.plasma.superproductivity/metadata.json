@@ -10,7 +10,7 @@
         "Description": "Sync Pomodoro & Task tracking with Super Productivity",
         "Icon": "appointment-soon",
         "Id": "org.kde.plasma.superproductivity",
-        "License": "GPL-2.0-or-later",
+        "License": "MIT",
         "Name": "Super Productivity Pomodoro",
         "Version": "1.0.0"
     },
