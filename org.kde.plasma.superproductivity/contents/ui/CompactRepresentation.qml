@@ -10,8 +10,9 @@ Item {
 
     readonly property bool isVertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
 
-    // True measured full target width & height
-    readonly property real fullWidth: contentRow.implicitWidth + (Kirigami.Units.smallSpacing * 3.5)
+    // Pill padding: ensure rounded caps never clip text
+    readonly property real horizontalPadding: Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
+    readonly property real fullWidth: contentRow.implicitWidth + (horizontalPadding * 2)
     readonly property real fullHeight: Math.min(parent.height - 4, contentRow.implicitHeight + 8)
 
     // Cached labels so text never vanishes before collapse completes
@@ -64,8 +65,8 @@ Item {
             to: "active"
             NumberAnimation {
                 property: "animProgress"
-                duration: 520
-                easing.type: Easing.OutQuart // Silky smooth fluid expansion
+                duration: 480
+                easing.type: Easing.OutQuart
             }
         },
         Transition {
@@ -73,8 +74,8 @@ Item {
             to: "inactive"
             NumberAnimation {
                 property: "animProgress"
-                duration: 450
-                easing.type: Easing.InOutQuart // Seamless fluid collapse
+                duration: 380
+                easing.type: Easing.InOutQuart
             }
         }
     ]
@@ -100,7 +101,6 @@ Item {
         width: Math.max(0, compactRoot.animatedWidth)
         height: Math.max(0, compactRoot.fullHeight)
         radius: height / 2
-        clip: true // Prevent text spilling out of pill during size transition
 
         color: {
             if (root.isBreak) {
@@ -117,14 +117,13 @@ Item {
             return Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.20);
         }
 
-        // Inner Content Container
+        // Inner Content Container with smooth fade and scale
         Item {
             anchors.centerIn: parent
             width: contentRow.implicitWidth
             height: contentRow.implicitHeight
 
-            // Smooth cubic fade curve synced with expansion
-            opacity: Math.max(0.0, Math.min(1.0, (compactRoot.animProgress - 0.35) / 0.65))
+            opacity: Math.max(0.0, Math.min(1.0, (compactRoot.animProgress - 0.25) / 0.75))
             scale: 0.90 + (0.10 * compactRoot.animProgress)
 
             RowLayout {
@@ -165,7 +164,7 @@ Item {
                     Layout.alignment: Qt.AlignVCenter
                     Layout.maximumWidth: 130
                     elide: Text.ElideRight
-                    visible: !isVertical && (root.currentTaskTitle !== "" || compactRoot.displayTask !== "")
+                    visible: !isVertical && ((root.isActive && root.currentTaskTitle !== "") || (!root.isActive && compactRoot.displayTask !== ""))
                     text: root.isActive ? root.currentTaskTitle : compactRoot.displayTask
                     font.family: "SF Pro Text, -apple-system, Cantarell, Noto Sans, sans-serif"
                     color: Kirigami.Theme.disabledTextColor
