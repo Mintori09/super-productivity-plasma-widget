@@ -21,8 +21,8 @@ A lightweight, distraction-free KDE Plasma 6 widget (Plasmoid) to display and tr
 
 - **KDE Plasma 6**
 - **plasma5support** (`plasma6-plasma5support` / `plasma-plasma5support` - provides `P5Support.DataSource` executable engine)
+- **python-dbus** & **python-gobject** (standard packages for event-driven D-Bus lifecycle detection)
 - **Super Productivity** (Desktop version with Local REST API enabled)
-- Standard system CLI tools: `procps` (`pgrep`), `coreutils` (`cat`)
 
 ---
 

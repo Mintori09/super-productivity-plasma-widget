@@ -26,6 +26,7 @@ PlasmoidItem {
     property int durationMs: 0
     property int cycle: 0
     property string token: ""
+    property string scriptPath: ""
 
     // Only show on KDE panel when Super Productivity is running AND a session is active
     readonly property bool isActive: isAppRunning && isConnected && (timerStatus === "running" || timerStatus === "paused")
@@ -33,53 +34,53 @@ PlasmoidItem {
 
     readonly property string apiBaseUrl: "http://127.0.0.1:3876"
 
+    // Asynchronous execution & event listening via Plasma5Support
     P5Support.DataSource {
         id: executableDataSource
         engine: "executable"
         connectedSources: []
 
         onNewData: function(sourceName, data) {
-            if (data["exit code"] !== undefined) {
-                var stdout = data["stdout"] || "";
-                disconnectSource(sourceName);
+            var stdout = data["stdout"] || "";
 
-                if (sourceName.indexOf("cat ") === 0) {
+            // 1. One-shot command to load token
+            if (sourceName.indexOf("cat ") === 0) {
+                if (data["exit code"] !== undefined) {
+                    disconnectSource(sourceName);
                     root.token = stdout.trim();
                     if (root.token && root.isAppRunning) {
                         fetchStatus();
                     }
-                } else if (sourceName.indexOf("pgrep ") === 0) {
-                    var running = stdout.trim().length > 0;
-                    if (root.isAppRunning !== running) {
-                        root.isAppRunning = running;
-                        if (!running) {
-                            root.isConnected = false;
-                            root.timerStatus = "idle";
-                            root.currentTaskTitle = "";
+                }
+                return;
+            }
+
+            // 2. Continuous D-Bus Event Stream: receives 'RUNNING' or 'STOPPED'
+            if (sourceName.indexOf("dbus_monitor.py") !== -1) {
+                var lines = stdout.trim().split("\n");
+                var latestState = lines[lines.length - 1];
+
+                if (latestState === "RUNNING") {
+                    if (!root.isAppRunning) {
+                        root.isAppRunning = true;
+                        if (!root.token) {
+                            loadToken();
                         } else {
-                            if (!root.token) {
-                                loadToken();
-                            } else {
-                                fetchStatus();
-                            }
+                            fetchStatus();
                         }
                     }
+                } else if (latestState === "STOPPED") {
+                    root.isAppRunning = false;
+                    root.isConnected = false;
+                    root.timerStatus = "idle";
+                    root.currentTaskTitle = "";
                 }
             }
         }
     }
 
-    // 1. Process check timer: Runs every 4s to check if superproductivity is open
-    // If NOT running, zero HTTP requests are sent!
-    Timer {
-        id: appCheckTimer
-        interval: 4000
-        running: true
-        repeat: true
-        onTriggered: checkAppRunning()
-    }
-
-    // 2. Poll timer for Pomodoro status: Only runs when App is actually running
+    // Status timer: Only active when Pomodoro session is RUNNING (for 1s countdown)
+    // When Idle or when App is stopped, timer interval relaxes or stops!
     Timer {
         id: statusPollTimer
         interval: (root.timerStatus === "running") ? 1000 : 3000
@@ -94,8 +95,9 @@ PlasmoidItem {
         }
     }
 
-    function checkAppRunning() {
-        executableDataSource.connectSource("pgrep -fa 'super-productivity|superproductivity' | grep -v 'plasma-widget' | grep -v 'grep' | head -n 1 2>/dev/null");
+    function startDbusMonitor() {
+        if (!root.scriptPath) return;
+        executableDataSource.connectSource(root.scriptPath);
     }
 
     function loadToken() {
@@ -189,7 +191,12 @@ PlasmoidItem {
     }
 
     Component.onCompleted: {
-        checkAppRunning();
+        var base = Qt.resolvedUrl("../scripts/dbus_monitor.py").toString();
+        if (base.indexOf("file://") === 0) {
+            base = base.substring(7);
+        }
+        root.scriptPath = base;
+        startDbusMonitor();
         loadToken();
     }
 }
