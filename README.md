@@ -17,10 +17,12 @@ A lightweight, distraction-free KDE Plasma 6 widget (Plasmoid) to display and tr
 
 ---
 
-## Requirements
+## Requirements & Dependencies
 
 - **KDE Plasma 6**
-- **Super Productivity** (Desktop version)
+- **plasma5support** (`plasma6-plasma5support` / `plasma-plasma5support` - provides `P5Support.DataSource` executable engine)
+- **Super Productivity** (Desktop version with Local REST API enabled)
+- Standard system CLI tools: `procps` (`pgrep`), `coreutils` (`cat`)
 
 ---
 
