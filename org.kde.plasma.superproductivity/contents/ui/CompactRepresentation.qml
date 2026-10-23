@@ -10,19 +10,36 @@ Item {
 
     readonly property bool isVertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
 
-    // True measured width of full content
+    // True measured full target width
     readonly property real fullWidth: contentRow.implicitWidth + (Kirigami.Units.smallSpacing * 3)
     readonly property real fullHeight: Math.min(parent.height - 4, contentRow.implicitHeight + 6)
+
+    // Cached labels so text never vanishes before collapse completes
+    property string displayTime: ""
+    property string displayTask: ""
+
+    onDisplayTimeChanged: {}
+    Connections {
+        target: root
+        function onRemainingMsChanged() {
+            if (root.isActive) {
+                compactRoot.displayTime = root.formatTime(root.remainingMs);
+            }
+        }
+        function onCurrentTaskTitleChanged() {
+            if (root.isActive && root.currentTaskTitle) {
+                compactRoot.displayTask = root.currentTaskTitle;
+            }
+        }
+    }
 
     // Animated progress from 0.0 (hidden) to 1.0 (fully expanded)
     property real animProgress: 0.0
 
-    // Synchronize visual state with main.qml Plasmoid.status
     onAnimProgressChanged: {
-        root.isVisuallyActive = (animProgress > 0.01);
+        root.isVisuallyActive = (animProgress > 0.005);
     }
 
-    // Trigger state changes
     states: [
         State {
             name: "active"
@@ -50,7 +67,7 @@ Item {
                 property: "animProgress"
                 duration: 400
                 easing.type: Easing.OutBack
-                easing.overshoot: 1.12 // Apple spring bounce
+                easing.overshoot: 1.15 // Apple spring bounce
             }
         },
         Transition {
@@ -58,13 +75,13 @@ Item {
             to: "inactive"
             NumberAnimation {
                 property: "animProgress"
-                duration: 300
+                duration: 320
                 easing.type: Easing.InOutCubic // Smooth collapse
             }
         }
     ]
 
-    // Provide fluid animated dimensions to KDE panel layout
+    // Fluid animated dimensions to panel
     readonly property real animatedWidth: fullWidth * animProgress
     readonly property real animatedHeight: fullHeight * animProgress
 
@@ -107,8 +124,8 @@ Item {
             width: contentRow.implicitWidth
             height: contentRow.implicitHeight
 
-            opacity: Math.max(0.0, Math.min(1.0, (compactRoot.animProgress - 0.25) / 0.75))
-            scale: 0.88 + (0.12 * compactRoot.animProgress)
+            opacity: Math.max(0.0, Math.min(1.0, (compactRoot.animProgress - 0.2) / 0.8))
+            scale: 0.85 + (0.15 * compactRoot.animProgress)
 
             RowLayout {
                 id: contentRow
@@ -137,8 +154,7 @@ Item {
                 QQC2.Label {
                     id: timeLabel
                     Layout.alignment: Qt.AlignVCenter
-                    visible: root.isConnected && (root.timerStatus === "running" || root.timerStatus === "paused")
-                    text: root.formatTime(root.remainingMs)
+                    text: root.isActive ? root.formatTime(root.remainingMs) : compactRoot.displayTime
                     font.bold: true
                     font.family: "SF Pro Text, -apple-system, Cantarell, Noto Sans, sans-serif"
                     color: root.isBreak ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.textColor
@@ -149,8 +165,8 @@ Item {
                     Layout.alignment: Qt.AlignVCenter
                     Layout.maximumWidth: 130
                     elide: Text.ElideRight
-                    visible: !isVertical && root.isConnected && root.currentTaskTitle !== "" && (root.timerStatus === "running" || root.timerStatus === "paused")
-                    text: root.currentTaskTitle
+                    visible: !isVertical && (root.currentTaskTitle !== "" || compactRoot.displayTask !== "")
+                    text: root.isActive ? root.currentTaskTitle : compactRoot.displayTask
                     font.family: "SF Pro Text, -apple-system, Cantarell, Noto Sans, sans-serif"
                     color: Kirigami.Theme.disabledTextColor
                 }
