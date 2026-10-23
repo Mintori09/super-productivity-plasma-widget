@@ -51,14 +51,16 @@ PlasmoidItem {
         }
     }
 
-    // Adaptive Timer: 
+    // Fast & Responsive Timer:
     // - 1s interval when Pomodoro is actively ticking (smooth countdown)
-    // - 3s interval when Idle / App closed (ultra lightweight, near zero CPU)
+    // - 1s interval when Idle / App open so it reacts immediately (13ms local loopback latency)
+    // - 2s interval only if connection completely fails (app not running)
     Timer {
         id: pollTimer
-        interval: (root.timerStatus === "running") ? 1000 : 3000
+        interval: (!root.isConnected) ? 2000 : 1000
         running: true
         repeat: true
+        triggeredOnStart: true
         onTriggered: {
             if (!root.token) {
                 loadToken();
