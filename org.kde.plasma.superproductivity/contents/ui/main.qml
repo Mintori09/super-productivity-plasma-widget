@@ -188,10 +188,6 @@ PlasmoidItem {
         xhr.send();
     }
 
-    function raiseSuperProductivityWindow() {
-        executableDataSource.connectSource("kdotool search --class superProductivity windowactivate 2>/dev/null || wmctrl -x -a superproductivity 2>/dev/null || gtk-launch superproductivity 2>/dev/null");
-    }
-
     Component.onCompleted: {
         checkAppRunning();
         loadToken();

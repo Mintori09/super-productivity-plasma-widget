@@ -5,8 +5,9 @@ KDE Plasma 6 Widget giúp theo dõi và đồng bộ Pomodoro / Task tracking t�
 ## Tính năng
 - **Hiển thị trực tiếp trên KDE Panel**: Đồng hồ đếm ngược `mm:ss`, trạng thái phiên (Focusing / Short Break / Long Break), tên task đang làm.
 - **Biểu tượng trạng thái thông minh**: Tự đổi icon theo trạng thái (nghỉ ngơi / làm việc / dừng).
-- **Popup chi tiết**: Nhấp chuột trái để xem số vòng lặp (Cycle #), thời gian đếm ngược cỡ lớn, nút **Stop Task** và nút mở nhanh app (**Open App**).
-- **Middle Click (Chuột giữa)**: Nhấp chuột giữa vào widget trên thanh bar để focus/mở ngay cửa sổ Super Productivity.
+- **Tự động ẩn hoàn toàn (Zero Clutter)**: Ẩn khỏi thanh bar khi không chạy Pomodoro hoặc khi tắt Super Productivity.
+- **Tiết kiệm tài nguyên**: Tự động nhận diện khi app tắt để không gửi bất kỳ HTTP request nào.
+- **Popup chi tiết**: Nhấp chuột trái để xem số vòng lặp (Cycle #), thời gian đếm ngược cỡ lớn và nút **Stop Task**.
 - **Không thay đổi mã nguồn app**: Sử dụng 100% Local REST API chuẩn sẵn có của Super Productivity.
 
 ## Cài đặt & Kích hoạt

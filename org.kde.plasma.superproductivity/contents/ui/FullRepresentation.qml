@@ -77,22 +77,12 @@ Item {
             // Controls
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
-                spacing: Kirigami.Units.mediumSpacing
 
                 QQC2.Button {
                     text: "Stop Task"
                     icon.name: "media-playback-stop"
                     enabled: root.currentTaskId !== ""
                     onClicked: root.stopCurrentTask()
-                }
-
-                QQC2.Button {
-                    text: "Open App"
-                    icon.name: "window-duplicate"
-                    onClicked: {
-                        Plasmoid.expanded = false;
-                        root.raiseSuperProductivityWindow();
-                    }
                 }
             }
         }

@@ -64,13 +64,8 @@ Item {
 
     MouseArea {
         anchors.fill: parent
-        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-        onClicked: function(mouse) {
-            if (mouse.button === Qt.LeftButton) {
-                Plasmoid.expanded = !Plasmoid.expanded;
-            } else if (mouse.button === Qt.MiddleButton) {
-                root.raiseSuperProductivityWindow();
-            }
+        onClicked: {
+            Plasmoid.expanded = !Plasmoid.expanded;
         }
     }
 }
