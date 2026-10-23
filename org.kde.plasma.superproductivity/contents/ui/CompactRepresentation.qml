@@ -10,18 +10,54 @@ Item {
 
     readonly property bool isVertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
 
-    visible: root.isActive
-    Layout.minimumWidth: (!root.isActive) ? 0 : (isVertical ? 0 : contentRow.implicitWidth)
-    Layout.minimumHeight: (!root.isActive) ? 0 : (isVertical ? contentRow.implicitHeight : 0)
-    Layout.preferredWidth: (!root.isActive) ? 0 : (isVertical ? 0 : contentRow.implicitWidth)
-    Layout.preferredHeight: (!root.isActive) ? 0 : (isVertical ? contentRow.implicitHeight : 0)
-    implicitWidth: root.isActive ? contentRow.implicitWidth : 0
-    implicitHeight: root.isActive ? contentRow.implicitHeight : 0
+    // Smooth width and height transitions
+    Layout.minimumWidth: isVertical ? 0 : width
+    Layout.minimumHeight: isVertical ? height : 0
+    Layout.preferredWidth: isVertical ? 0 : width
+    Layout.preferredHeight: isVertical ? height : 0
+    implicitWidth: width
+    implicitHeight: height
+
+    width: root.isActive ? contentRow.implicitWidth : 0
+    height: root.isActive ? contentRow.implicitHeight : 0
+    visible: width > 0 || opacity > 0
+    opacity: root.isActive ? 1.0 : 0.0
+    clip: true
+
+    Behavior on width {
+        NumberAnimation {
+            duration: Kirigami.Units.longDuration
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    Behavior on height {
+        NumberAnimation {
+            duration: Kirigami.Units.longDuration
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    Behavior on opacity {
+        NumberAnimation {
+            duration: Kirigami.Units.shortDuration
+            easing.type: Easing.OutQuad
+        }
+    }
 
     RowLayout {
         id: contentRow
-        anchors.fill: parent
+        anchors.verticalCenter: parent.verticalCenter
         spacing: Kirigami.Units.smallSpacing
+
+        // Subtle scale transition for content
+        scale: root.isActive ? 1.0 : 0.85
+        Behavior on scale {
+            NumberAnimation {
+                duration: Kirigami.Units.longDuration
+                easing.type: Easing.OutBack
+            }
+        }
 
         Kirigami.Icon {
             id: mainIcon
@@ -40,6 +76,12 @@ Item {
                 if (root.timerStatus === "running") return Kirigami.Theme.highlightColor;
                 return Kirigami.Theme.textColor;
             }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Kirigami.Units.shortDuration
+                }
+            }
         }
 
         QQC2.Label {
@@ -54,11 +96,17 @@ Item {
         QQC2.Label {
             id: taskLabel
             Layout.alignment: Qt.AlignVCenter
-            Layout.maximumWidth: 120
+            Layout.maximumWidth: 140
             elide: Text.ElideRight
             visible: !isVertical && root.isConnected && root.currentTaskTitle !== "" && (root.timerStatus === "running" || root.timerStatus === "paused")
             text: root.currentTaskTitle
             color: Kirigami.Theme.disabledTextColor
+
+            Behavior on Layout.maximumWidth {
+                NumberAnimation {
+                    duration: Kirigami.Units.shortDuration
+                }
+            }
         }
     }
 
