@@ -10,10 +10,8 @@ Item {
 
     readonly property bool isVertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
 
-    // Pill padding: ensure rounded caps never clip text
+    // True measured components
     readonly property real horizontalPadding: Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
-    readonly property real fullWidth: contentRow.implicitWidth + (horizontalPadding * 2)
-    readonly property real fullHeight: Math.min(parent.height - 4, contentRow.implicitHeight + 8)
 
     // Cached labels so text never vanishes before collapse completes
     property string displayTime: ""
@@ -33,7 +31,7 @@ Item {
         }
     }
 
-    // Animated progress from 0.0 (hidden) to 1.0 (fully expanded)
+    // 1. Overall Session Lifecycle Animation (Appear/Disappear: 0.0 -> 1.0)
     property real animProgress: 0.0
 
     states: [
@@ -76,8 +74,28 @@ Item {
         }
     ]
 
-    // Fluid animated dimensions to panel layout
-    readonly property real animatedWidth: fullWidth * animProgress
+    // 2. Pause / Resume Fluid Width Transition (Option B)
+    // When Running: show task title (expand pill width)
+    // When Paused: fade task title & contract pill width smoothly to just icon + time
+    readonly property bool hasTask: (root.isActive && root.currentTaskTitle !== "") || (!root.isActive && compactRoot.displayTask !== "")
+    readonly property bool isTaskExpanded: root.timerStatus === "running" && hasTask
+
+    property real taskExpansionProgress: isTaskExpanded ? 1.0 : 0.0
+    Behavior on taskExpansionProgress {
+        NumberAnimation {
+            duration: 400
+            easing.type: Easing.OutQuart // Silky smooth macOS fluid morph
+        }
+    }
+
+    // Layout calculation based on dynamic expansion
+    readonly property real baseWidth: mainIcon.width + timeLabel.implicitWidth + (Kirigami.Units.smallSpacing * 2) + (horizontalPadding * 2)
+    readonly property real taskAddedWidth: (taskLabel.implicitWidth + Kirigami.Units.smallSpacing) * taskExpansionProgress
+    readonly property real fullTargetWidth: baseWidth + taskAddedWidth
+    readonly property real fullHeight: Math.min(parent.height - 4, contentRow.implicitHeight + 8)
+
+    // Fluid animated dimensions to KDE panel layout
+    readonly property real animatedWidth: fullTargetWidth * animProgress
     readonly property real animatedHeight: fullHeight * animProgress
 
     Layout.minimumWidth: isVertical ? 0 : animatedWidth
@@ -113,7 +131,7 @@ Item {
             return Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.20);
         }
 
-        // Inner Content Container with smooth fade and scale
+        // Inner Content Container
         Item {
             anchors.centerIn: parent
             width: contentRow.implicitWidth
@@ -127,6 +145,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: Kirigami.Units.smallSpacing
 
+                // Icon stays as pure clock icon as requested
                 Kirigami.Icon {
                     id: mainIcon
                     Layout.preferredWidth: Kirigami.Units.iconSizes.small - 2
@@ -142,10 +161,11 @@ Item {
                         if (!root.isConnected) return Kirigami.Theme.disabledTextColor;
                         if (root.isBreak) return Kirigami.Theme.positiveTextColor;
                         if (root.timerStatus === "running") return Kirigami.Theme.highlightColor;
-                        return Kirigami.Theme.textColor;
+                        return Kirigami.Theme.disabledTextColor; // Soft dim on pause
                     }
                 }
 
+                // Time label: slightly dimmed when paused to indicate frozen state
                 QQC2.Label {
                     id: timeLabel
                     Layout.alignment: Qt.AlignVCenter
@@ -153,17 +173,38 @@ Item {
                     font.bold: true
                     font.family: "SF Pro Text, -apple-system, Cantarell, Noto Sans, sans-serif"
                     color: root.isBreak ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.textColor
+                    opacity: (root.timerStatus === "paused") ? 0.7 : 1.0
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 350
+                            easing.type: Easing.OutQuad
+                        }
+                    }
                 }
 
-                QQC2.Label {
-                    id: taskLabel
+                // Task label: Fades out and slides width to 0 during Pause
+                Item {
+                    id: taskContainer
                     Layout.alignment: Qt.AlignVCenter
-                    Layout.maximumWidth: 130
-                    elide: Text.ElideRight
-                    visible: !isVertical && ((root.isActive && root.currentTaskTitle !== "") || (!root.isActive && compactRoot.displayTask !== ""))
-                    text: root.isActive ? root.currentTaskTitle : compactRoot.displayTask
-                    font.family: "SF Pro Text, -apple-system, Cantarell, Noto Sans, sans-serif"
-                    color: Kirigami.Theme.disabledTextColor
+                    Layout.preferredWidth: isVertical ? 0 : (taskLabel.implicitWidth * compactRoot.taskExpansionProgress)
+                    Layout.preferredHeight: taskLabel.implicitHeight
+                    implicitWidth: isVertical ? 0 : (taskLabel.implicitWidth * compactRoot.taskExpansionProgress)
+                    implicitHeight: taskLabel.implicitHeight
+                    visible: !isVertical && compactRoot.hasTask && compactRoot.taskExpansionProgress > 0.001
+                    clip: true
+
+                    QQC2.Label {
+                        id: taskLabel
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        Layout.maximumWidth: 130
+                        elide: Text.ElideRight
+                        text: root.isActive ? root.currentTaskTitle : compactRoot.displayTask
+                        font.family: "SF Pro Text, -apple-system, Cantarell, Noto Sans, sans-serif"
+                        color: Kirigami.Theme.disabledTextColor
+                        opacity: compactRoot.taskExpansionProgress
+                    }
                 }
             }
         }
