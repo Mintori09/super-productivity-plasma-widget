@@ -10,54 +10,36 @@ Item {
 
     readonly property bool isVertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
 
-    // Smooth width and height transitions
-    Layout.minimumWidth: isVertical ? 0 : width
-    Layout.minimumHeight: isVertical ? height : 0
-    Layout.preferredWidth: isVertical ? 0 : width
-    Layout.preferredHeight: isVertical ? height : 0
-    implicitWidth: width
-    implicitHeight: height
+    visible: root.isActive
+    Layout.minimumWidth: (!root.isActive) ? 0 : (isVertical ? 0 : contentRow.implicitWidth)
+    Layout.minimumHeight: (!root.isActive) ? 0 : (isVertical ? contentRow.implicitHeight : 0)
+    Layout.preferredWidth: (!root.isActive) ? 0 : (isVertical ? 0 : contentRow.implicitWidth)
+    Layout.preferredHeight: (!root.isActive) ? 0 : (isVertical ? contentRow.implicitHeight : 0)
+    implicitWidth: root.isActive ? contentRow.implicitWidth : 0
+    implicitHeight: root.isActive ? contentRow.implicitHeight : 0
 
-    width: root.isActive ? contentRow.implicitWidth : 0
-    height: root.isActive ? contentRow.implicitHeight : 0
-    visible: width > 0 || opacity > 0
+    // Smooth fade & subtle scale transition
     opacity: root.isActive ? 1.0 : 0.0
-    clip: true
-
-    Behavior on width {
-        NumberAnimation {
-            duration: Kirigami.Units.longDuration
-            easing.type: Easing.OutCubic
-        }
-    }
-
-    Behavior on height {
-        NumberAnimation {
-            duration: Kirigami.Units.longDuration
-            easing.type: Easing.OutCubic
-        }
-    }
+    scale: root.isActive ? 1.0 : 0.85
 
     Behavior on opacity {
         NumberAnimation {
-            duration: Kirigami.Units.shortDuration
+            duration: Kirigami.Units.longDuration
             easing.type: Easing.OutQuad
+        }
+    }
+
+    Behavior on scale {
+        NumberAnimation {
+            duration: Kirigami.Units.longDuration
+            easing.type: Easing.OutBack
         }
     }
 
     RowLayout {
         id: contentRow
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.fill: parent
         spacing: Kirigami.Units.smallSpacing
-
-        // Subtle scale transition for content
-        scale: root.isActive ? 1.0 : 0.85
-        Behavior on scale {
-            NumberAnimation {
-                duration: Kirigami.Units.longDuration
-                easing.type: Easing.OutBack
-            }
-        }
 
         Kirigami.Icon {
             id: mainIcon
@@ -101,12 +83,6 @@ Item {
             visible: !isVertical && root.isConnected && root.currentTaskTitle !== "" && (root.timerStatus === "running" || root.timerStatus === "paused")
             text: root.currentTaskTitle
             color: Kirigami.Theme.disabledTextColor
-
-            Behavior on Layout.maximumWidth {
-                NumberAnimation {
-                    duration: Kirigami.Units.shortDuration
-                }
-            }
         }
     }
 
