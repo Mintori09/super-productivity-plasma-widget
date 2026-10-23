@@ -25,7 +25,7 @@ Item {
             }
         }
         function onCurrentTaskTitleChanged() {
-            if (root.isActive && root.currentTaskTitle) {
+            if (root.currentTaskTitle) {
                 compactRoot.displayTask = root.currentTaskTitle;
             }
         }
@@ -75,22 +75,58 @@ Item {
     ]
 
     // 2. Pause / Resume Fluid Width Transition (Option B)
-    // When Running: show task title (expand pill width)
-    // When Paused: fade task title & contract pill width smoothly to just icon + time
-    readonly property bool hasTask: (root.isActive && root.currentTaskTitle !== "") || (!root.isActive && compactRoot.displayTask !== "")
+    // Always use displayTask so width doesn't abruptly drop to 0 before animation begins
+    readonly property bool hasTask: (root.currentTaskTitle !== "" || compactRoot.displayTask !== "")
     readonly property bool isTaskExpanded: root.timerStatus === "running" && hasTask
 
-    property real taskExpansionProgress: isTaskExpanded ? 1.0 : 0.0
-    Behavior on taskExpansionProgress {
-        NumberAnimation {
-            duration: 400
-            easing.type: Easing.OutQuart // Silky smooth macOS fluid morph
-        }
+    property real taskExpansionProgress: 0.0
+
+    // Explicit state transition for Option B to ensure smooth symmetric interpolation
+    Item {
+        id: morphStateItem
+        state: compactRoot.isTaskExpanded ? "expanded" : "collapsed"
+        states: [
+            State {
+                name: "expanded"
+                PropertyChanges {
+                    target: compactRoot
+                    taskExpansionProgress: 1.0
+                }
+            },
+            State {
+                name: "collapsed"
+                PropertyChanges {
+                    target: compactRoot
+                    taskExpansionProgress: 0.0
+                }
+            }
+        ]
+        transitions: [
+            Transition {
+                from: "collapsed"
+                to: "expanded"
+                NumberAnimation {
+                    property: "taskExpansionProgress"
+                    duration: 420
+                    easing.type: Easing.OutQuart
+                }
+            },
+            Transition {
+                from: "expanded"
+                to: "collapsed"
+                NumberAnimation {
+                    property: "taskExpansionProgress"
+                    duration: 380
+                    easing.type: Easing.InOutQuart
+                }
+            }
+        ]
     }
 
-    // Layout calculation based on dynamic expansion
+    // Stable text width reference
+    readonly property real stableTaskWidth: Math.min(130, Math.max(taskLabel.implicitWidth, 40))
     readonly property real baseWidth: mainIcon.width + timeLabel.implicitWidth + (Kirigami.Units.smallSpacing * 2) + (horizontalPadding * 2)
-    readonly property real taskAddedWidth: (taskLabel.implicitWidth + Kirigami.Units.smallSpacing) * taskExpansionProgress
+    readonly property real taskAddedWidth: (stableTaskWidth + Kirigami.Units.smallSpacing) * taskExpansionProgress
     readonly property real fullTargetWidth: baseWidth + taskAddedWidth
     readonly property real fullHeight: Math.min(parent.height - 4, contentRow.implicitHeight + 8)
 
@@ -183,13 +219,13 @@ Item {
                     }
                 }
 
-                // Task label: Fades out and slides width to 0 during Pause
+                // Task label: Fades out and slides width smoothly during Pause
                 Item {
                     id: taskContainer
                     Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredWidth: isVertical ? 0 : (taskLabel.implicitWidth * compactRoot.taskExpansionProgress)
+                    Layout.preferredWidth: isVertical ? 0 : (compactRoot.stableTaskWidth * compactRoot.taskExpansionProgress)
                     Layout.preferredHeight: taskLabel.implicitHeight
-                    implicitWidth: isVertical ? 0 : (taskLabel.implicitWidth * compactRoot.taskExpansionProgress)
+                    implicitWidth: isVertical ? 0 : (compactRoot.stableTaskWidth * compactRoot.taskExpansionProgress)
                     implicitHeight: taskLabel.implicitHeight
                     visible: !isVertical && compactRoot.hasTask && compactRoot.taskExpansionProgress > 0.001
                     clip: true
@@ -198,9 +234,9 @@ Item {
                         id: taskLabel
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        Layout.maximumWidth: 130
+                        width: compactRoot.stableTaskWidth
                         elide: Text.ElideRight
-                        text: root.isActive ? root.currentTaskTitle : compactRoot.displayTask
+                        text: root.currentTaskTitle ? root.currentTaskTitle : compactRoot.displayTask
                         font.family: "SF Pro Text, -apple-system, Cantarell, Noto Sans, sans-serif"
                         color: Kirigami.Theme.disabledTextColor
                         opacity: compactRoot.taskExpansionProgress
