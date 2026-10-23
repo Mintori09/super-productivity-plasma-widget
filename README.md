@@ -1,30 +1,61 @@
 # Super Productivity Pomodoro Widget for KDE Plasma 6
 
-KDE Plasma 6 Widget giúp theo dõi và đồng bộ Pomodoro / Task tracking từ Super Productivity lên thanh KDE Bar.
+A lightweight, distraction-free KDE Plasma 6 widget (Plasmoid) to display and track Pomodoro sessions directly on your KDE panel, integrated with [Super Productivity](https://github.com/johannesjo/super-productivity).
 
-## Tính năng
-- **Hiển thị trực tiếp trên KDE Panel**: Đồng hồ đếm ngược `mm:ss`, trạng thái phiên (Focusing / Short Break / Long Break), tên task đang làm.
-- **Biểu tượng trạng thái thông minh**: Tự đổi icon theo trạng thái (nghỉ ngơi / làm việc / dừng).
-- **Tự động ẩn hoàn toàn (Zero Clutter)**: Ẩn khỏi thanh bar khi không chạy Pomodoro hoặc khi tắt Super Productivity.
-- **Tiết kiệm tài nguyên**: Tự động nhận diện khi app tắt để không gửi bất kỳ HTTP request nào.
-- **Popup chi tiết**: Nhấp chuột trái để xem số vòng lặp (Cycle #), thời gian đếm ngược cỡ lớn và nút **Stop Task**.
-- **Không thay đổi mã nguồn app**: Sử dụng 100% Local REST API chuẩn sẵn có của Super Productivity.
+---
 
-## Cài đặt & Kích hoạt
+## Features
 
-### 1. Bật Local REST API trong Super Productivity
-1. Mở Super Productivity.
-2. Vào **Settings** -> **Miscellaneous** -> bật **Local REST API**.
-3. (Tùy chọn) Chọn port mặc định là `3876`. Token xác thực sẽ tự động được lưu an toàn tại `~/.config/superProductivity/local-rest-api-token`.
+- **Direct Panel Integration:** Displays remaining time (`mm:ss`), current session type (Focusing, Short Break, Long Break), and the active task title directly on the KDE panel.
+- **Auto-Hide (Zero Clutter):** Automatically hides itself from the panel when idle or when Super Productivity is closed.
+- **Smart Resource Management:**
+  - Detects whether Super Productivity is running before sending any network requests.
+  - Zero HTTP requests are sent when the app is closed.
+  - Adaptive polling: polls every second during active Pomodoro sessions, and relaxes interval when idle.
+- **Compact Popup:** Click the widget to see the cycle count (`#Cycle`), a large countdown timer, and a one-click **Stop Task** button.
+- **Zero App Modifications:** Connects seamlessly via Super Productivity's built-in Local REST API.
 
-### 2. Cài đặt Widget vào KDE Plasma
-Widget đã được symlink vào thư mục Plasmoid của user:
+---
+
+## Requirements
+
+- **KDE Plasma 6**
+- **Super Productivity** (Desktop version)
+
+---
+
+## Getting Started
+
+### 1. Enable Local REST API in Super Productivity
+1. Open **Super Productivity**.
+2. Go to **Settings** -> **Miscellaneous**.
+3. Toggle on **Local REST API** (default port: `3876`).
+   > The auth token is automatically generated and stored at `~/.config/superProductivity/local-rest-api-token`.
+
+### 2. Install the Widget
+Clone this repository and run the install script:
+
 ```bash
-ln -sfn /path/to/super-productivity/extra/kde-plasma-widget/org.kde.plasma.superproductivity ~/.local/share/plasma/plasmoids/org.kde.plasma.superproductivity
+git clone https://github.com/your-username/super-productivity-plasma-widget.git
+cd super-productivity-plasma-widget
+./install.sh
 ```
 
-### 3. Thêm Widget vào Panel / Bar KDE
-1. Nhấp chuột phải vào thanh Taskbar/Panel của KDE -> chọn **Enter Edit Mode** (Chế độ chỉnh sửa).
-2. Bấm **Add Widgets...** (Thêm tiện ích).
-3. Tìm kiếm **Super Productivity Pomodoro**.
-4. Kéo thả widget vào vị trí mong muốn trên Panel.
+Or manually link the plasmoid directory:
+```bash
+mkdir -p ~/.local/share/plasma/plasmoids
+ln -sfn "$(pwd)/org.kde.plasma.superproductivity" ~/.local/share/plasma/plasmoids/org.kde.plasma.superproductivity
+systemctl --user restart plasma-plasmashell.service
+```
+
+### 3. Add to Panel
+1. Right-click on your KDE Panel -> select **Enter Edit Mode**.
+2. Click **Add Widgets...**
+3. Search for **Super Productivity Pomodoro**.
+4. Drag and drop it onto your preferred position on the panel.
+
+---
+
+## License
+
+GPL-2.0-or-later
