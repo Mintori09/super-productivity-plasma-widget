@@ -10,15 +10,14 @@ Item {
 
     readonly property bool isVertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
 
-    // True measured full target width
-    readonly property real fullWidth: contentRow.implicitWidth + (Kirigami.Units.smallSpacing * 3)
-    readonly property real fullHeight: Math.min(parent.height - 4, contentRow.implicitHeight + 6)
+    // True measured full target width & height
+    readonly property real fullWidth: contentRow.implicitWidth + (Kirigami.Units.smallSpacing * 3.5)
+    readonly property real fullHeight: Math.min(parent.height - 4, contentRow.implicitHeight + 8)
 
     // Cached labels so text never vanishes before collapse completes
     property string displayTime: ""
     property string displayTask: ""
 
-    onDisplayTimeChanged: {}
     Connections {
         target: root
         function onRemainingMsChanged() {
@@ -65,9 +64,8 @@ Item {
             to: "active"
             NumberAnimation {
                 property: "animProgress"
-                duration: 400
-                easing.type: Easing.OutBack
-                easing.overshoot: 1.15 // Apple spring bounce
+                duration: 520
+                easing.type: Easing.OutQuart // Silky smooth fluid expansion
             }
         },
         Transition {
@@ -75,13 +73,13 @@ Item {
             to: "inactive"
             NumberAnimation {
                 property: "animProgress"
-                duration: 320
-                easing.type: Easing.InOutCubic // Smooth collapse
+                duration: 450
+                easing.type: Easing.InOutQuart // Seamless fluid collapse
             }
         }
     ]
 
-    // Fluid animated dimensions to panel
+    // Fluid animated dimensions to panel layout
     readonly property real animatedWidth: fullWidth * animProgress
     readonly property real animatedHeight: fullHeight * animProgress
 
@@ -102,20 +100,21 @@ Item {
         width: Math.max(0, compactRoot.animatedWidth)
         height: Math.max(0, compactRoot.fullHeight)
         radius: height / 2
+        clip: true // Prevent text spilling out of pill during size transition
 
         color: {
             if (root.isBreak) {
-                return Qt.rgba(Kirigami.Theme.positiveTextColor.r, Kirigami.Theme.positiveTextColor.g, Kirigami.Theme.positiveTextColor.b, 0.18);
+                return Qt.rgba(Kirigami.Theme.positiveTextColor.r, Kirigami.Theme.positiveTextColor.g, Kirigami.Theme.positiveTextColor.b, 0.20);
             }
-            return Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.12);
+            return Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.13);
         }
 
         border.width: 1
         border.color: {
             if (root.isBreak) {
-                return Qt.rgba(Kirigami.Theme.positiveTextColor.r, Kirigami.Theme.positiveTextColor.g, Kirigami.Theme.positiveTextColor.b, 0.35);
+                return Qt.rgba(Kirigami.Theme.positiveTextColor.r, Kirigami.Theme.positiveTextColor.g, Kirigami.Theme.positiveTextColor.b, 0.38);
             }
-            return Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.18);
+            return Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.20);
         }
 
         // Inner Content Container
@@ -124,8 +123,9 @@ Item {
             width: contentRow.implicitWidth
             height: contentRow.implicitHeight
 
-            opacity: Math.max(0.0, Math.min(1.0, (compactRoot.animProgress - 0.2) / 0.8))
-            scale: 0.85 + (0.15 * compactRoot.animProgress)
+            // Smooth cubic fade curve synced with expansion
+            opacity: Math.max(0.0, Math.min(1.0, (compactRoot.animProgress - 0.35) / 0.65))
+            scale: 0.90 + (0.10 * compactRoot.animProgress)
 
             RowLayout {
                 id: contentRow
@@ -182,7 +182,7 @@ Item {
             Plasmoid.expanded = !Plasmoid.expanded;
         }
         onEntered: {
-            contentPill.scale = 1.05;
+            contentPill.scale = 1.04;
         }
         onExited: {
             contentPill.scale = 1.0;
