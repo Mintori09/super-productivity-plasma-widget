@@ -26,12 +26,11 @@ PlasmoidItem {
     property int cycle: 0
     property string token: ""
 
-    // Target active flag
+    // Target active flag: visible when actively tracking (running or paused)
     readonly property bool isActive: isConnected && (timerStatus === "running" || timerStatus === "paused")
 
-    // Keep status Active until exit animation finishes, then hide
-    property bool isVisuallyActive: false
-    Plasmoid.status: (isActive || isVisuallyActive) ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.HiddenStatus
+    // Keep status Active to avoid KDE killing QML animations
+    Plasmoid.status: PlasmaCore.Types.ActiveStatus
 
     readonly property string apiBaseUrl: "http://127.0.0.1:3876"
 

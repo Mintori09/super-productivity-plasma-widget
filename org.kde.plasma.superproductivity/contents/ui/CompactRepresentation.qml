@@ -36,10 +36,6 @@ Item {
     // Animated progress from 0.0 (hidden) to 1.0 (fully expanded)
     property real animProgress: 0.0
 
-    onAnimProgressChanged: {
-        root.isVisuallyActive = (animProgress > 0.005);
-    }
-
     states: [
         State {
             name: "active"
@@ -65,7 +61,7 @@ Item {
             to: "active"
             NumberAnimation {
                 property: "animProgress"
-                duration: 480
+                duration: 450
                 easing.type: Easing.OutQuart
             }
         },
@@ -102,25 +98,11 @@ Item {
         height: Math.max(0, compactRoot.fullHeight)
         radius: height / 2
 
-        // Smooth background color transition between States (Running / Paused / Break)
         color: {
             if (root.isBreak) {
                 return Qt.rgba(Kirigami.Theme.positiveTextColor.r, Kirigami.Theme.positiveTextColor.g, Kirigami.Theme.positiveTextColor.b, 0.20);
             }
-            if (root.timerStatus === "paused") {
-                // Subtle dimmed amber/yellow tint when paused
-                return Qt.rgba(Kirigami.Theme.neutralTextColor ? Kirigami.Theme.neutralTextColor.r : 0.8, 
-                               Kirigami.Theme.neutralTextColor ? Kirigami.Theme.neutralTextColor.g : 0.6, 
-                               Kirigami.Theme.neutralTextColor ? Kirigami.Theme.neutralTextColor.b : 0.2, 0.16);
-            }
             return Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.13);
-        }
-
-        Behavior on color {
-            ColorAnimation {
-                duration: 350
-                easing.type: Easing.OutQuad
-            }
         }
 
         border.width: 1
@@ -128,19 +110,7 @@ Item {
             if (root.isBreak) {
                 return Qt.rgba(Kirigami.Theme.positiveTextColor.r, Kirigami.Theme.positiveTextColor.g, Kirigami.Theme.positiveTextColor.b, 0.38);
             }
-            if (root.timerStatus === "paused") {
-                return Qt.rgba(Kirigami.Theme.neutralTextColor ? Kirigami.Theme.neutralTextColor.r : 0.8, 
-                               Kirigami.Theme.neutralTextColor ? Kirigami.Theme.neutralTextColor.g : 0.6, 
-                               Kirigami.Theme.neutralTextColor ? Kirigami.Theme.neutralTextColor.b : 0.2, 0.30);
-            }
             return Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.20);
-        }
-
-        Behavior on border.color {
-            ColorAnimation {
-                duration: 350
-                easing.type: Easing.OutQuad
-            }
         }
 
         // Inner Content Container with smooth fade and scale
@@ -157,7 +127,6 @@ Item {
                 anchors.centerIn: parent
                 spacing: Kirigami.Units.smallSpacing
 
-                // Icon with subtle pop & color fade transition when toggling pause/running
                 Kirigami.Icon {
                     id: mainIcon
                     Layout.preferredWidth: Kirigami.Units.iconSizes.small - 2
@@ -167,32 +136,13 @@ Item {
                         if (!root.isConnected) return "network-offline";
                         if (root.isBreak) return "coffee";
                         if (root.timerStatus === "running") return "chronometer";
-                        if (root.timerStatus === "paused") return "media-playback-pause";
                         return "appointment-soon";
                     }
                     color: {
                         if (!root.isConnected) return Kirigami.Theme.disabledTextColor;
                         if (root.isBreak) return Kirigami.Theme.positiveTextColor;
                         if (root.timerStatus === "running") return Kirigami.Theme.highlightColor;
-                        if (root.timerStatus === "paused") return (Kirigami.Theme.neutralTextColor || Kirigami.Theme.disabledTextColor);
                         return Kirigami.Theme.textColor;
-                    }
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: 300
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-
-                    // Gentle pulse bounce on state change
-                    scale: (root.timerStatus === "running") ? 1.0 : 0.92
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 300
-                            easing.type: Easing.OutBack
-                            easing.overshoot: 1.2
-                        }
                     }
                 }
 
@@ -202,24 +152,7 @@ Item {
                     text: root.isActive ? root.formatTime(root.remainingMs) : compactRoot.displayTime
                     font.bold: true
                     font.family: "SF Pro Text, -apple-system, Cantarell, Noto Sans, sans-serif"
-                    color: {
-                        if (root.isBreak) return Kirigami.Theme.positiveTextColor;
-                        if (root.timerStatus === "paused") return Kirigami.Theme.disabledTextColor;
-                        return Kirigami.Theme.textColor;
-                    }
-                    opacity: (root.timerStatus === "paused") ? 0.75 : 1.0
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: 300
-                        }
-                    }
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: 300
-                            easing.type: Easing.OutQuad
-                        }
-                    }
+                    color: root.isBreak ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.textColor
                 }
 
                 QQC2.Label {
@@ -231,37 +164,8 @@ Item {
                     text: root.isActive ? root.currentTaskTitle : compactRoot.displayTask
                     font.family: "SF Pro Text, -apple-system, Cantarell, Noto Sans, sans-serif"
                     color: Kirigami.Theme.disabledTextColor
-                    opacity: (root.timerStatus === "paused") ? 0.6 : 0.9
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: 300
-                        }
-                    }
                 }
             }
-        }
-    }
-
-    // Gentle breathing pulse animation for the timeLabel when in Paused state
-    SequentialAnimation {
-        running: root.timerStatus === "paused"
-        loops: Animation.Infinite
-        NumberAnimation {
-            target: timeLabel
-            property: "opacity"
-            from: 0.85
-            to: 0.35
-            duration: 900
-            easing.type: Easing.InOutSine
-        }
-        NumberAnimation {
-            target: timeLabel
-            property: "opacity"
-            from: 0.35
-            to: 0.85
-            duration: 900
-            easing.type: Easing.InOutSine
         }
     }
 
