@@ -26,9 +26,12 @@ PlasmoidItem {
     property int cycle: 0
     property string token: ""
 
-    // Auto-hide when idle or app closed
+    // Target active flag
     readonly property bool isActive: isConnected && (timerStatus === "running" || timerStatus === "paused")
-    Plasmoid.status: isActive ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.HiddenStatus
+
+    // Keep status Active until exit animation finishes, then hide
+    property bool isVisuallyActive: false
+    Plasmoid.status: (isActive || isVisuallyActive) ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.HiddenStatus
 
     readonly property string apiBaseUrl: "http://127.0.0.1:3876"
 
@@ -51,10 +54,6 @@ PlasmoidItem {
         }
     }
 
-    // Fast & Responsive Timer:
-    // - 1s interval when Pomodoro is actively ticking (smooth countdown)
-    // - 1s interval when Idle / App open so it reacts immediately (13ms local loopback latency)
-    // - 2s interval only if connection completely fails (app not running)
     Timer {
         id: pollTimer
         interval: (!root.isConnected) ? 2000 : 1000

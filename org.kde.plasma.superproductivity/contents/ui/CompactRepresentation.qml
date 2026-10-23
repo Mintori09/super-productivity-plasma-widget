@@ -10,42 +10,80 @@ Item {
 
     readonly property bool isVertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
 
-    // Fluid animated width (macOS Dynamic Island expansion)
-    property real fullWidth: contentRow.implicitWidth + (Kirigami.Units.smallSpacing * 3)
-    property real animWidth: root.isActive ? fullWidth : 0
-    property real animHeight: root.isActive ? Math.min(parent.height - 4, contentRow.implicitHeight + 6) : 0
+    // True measured width of full content
+    readonly property real fullWidth: contentRow.implicitWidth + (Kirigami.Units.smallSpacing * 3)
+    readonly property real fullHeight: Math.min(parent.height - 4, contentRow.implicitHeight + 6)
 
-    Behavior on animWidth {
-        NumberAnimation {
-            duration: 400
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.15 // Gentle, elegant macOS expansion
-        }
+    // Animated progress from 0.0 (hidden) to 1.0 (fully expanded)
+    property real animProgress: 0.0
+
+    // Synchronize visual state with main.qml Plasmoid.status
+    onAnimProgressChanged: {
+        root.isVisuallyActive = (animProgress > 0.01);
     }
 
-    Behavior on animHeight {
-        NumberAnimation {
-            duration: 350
-            easing.type: Easing.OutCubic
+    // Trigger state changes
+    states: [
+        State {
+            name: "active"
+            when: root.isActive
+            PropertyChanges {
+                target: compactRoot
+                animProgress: 1.0
+            }
+        },
+        State {
+            name: "inactive"
+            when: !root.isActive
+            PropertyChanges {
+                target: compactRoot
+                animProgress: 0.0
+            }
         }
-    }
+    ]
 
-    Layout.minimumWidth: isVertical ? 0 : animWidth
-    Layout.minimumHeight: isVertical ? animHeight : 0
-    Layout.preferredWidth: isVertical ? 0 : animWidth
-    Layout.preferredHeight: isVertical ? animHeight : 0
-    implicitWidth: isVertical ? 0 : animWidth
-    implicitHeight: isVertical ? animHeight : 0
+    transitions: [
+        Transition {
+            from: "inactive"
+            to: "active"
+            NumberAnimation {
+                property: "animProgress"
+                duration: 400
+                easing.type: Easing.OutBack
+                easing.overshoot: 1.12 // Apple spring bounce
+            }
+        },
+        Transition {
+            from: "active"
+            to: "inactive"
+            NumberAnimation {
+                property: "animProgress"
+                duration: 300
+                easing.type: Easing.InOutCubic // Smooth collapse
+            }
+        }
+    ]
 
-    visible: animWidth > 0.5 || opacity > 0
+    // Provide fluid animated dimensions to KDE panel layout
+    readonly property real animatedWidth: fullWidth * animProgress
+    readonly property real animatedHeight: fullHeight * animProgress
+
+    Layout.minimumWidth: isVertical ? 0 : animatedWidth
+    Layout.minimumHeight: isVertical ? animatedHeight : 0
+    Layout.preferredWidth: isVertical ? 0 : animatedWidth
+    Layout.preferredHeight: isVertical ? animatedHeight : 0
+    implicitWidth: isVertical ? 0 : animatedWidth
+    implicitHeight: isVertical ? animatedHeight : 0
+
+    visible: animProgress > 0.001
     clip: true
 
     // macOS Dynamic Island Pill
     Rectangle {
         id: contentPill
         anchors.centerIn: parent
-        width: Math.max(0, compactRoot.animWidth)
-        height: Math.max(0, compactRoot.animHeight)
+        width: Math.max(0, compactRoot.animatedWidth)
+        height: Math.max(0, compactRoot.fullHeight)
         radius: height / 2
 
         color: {
@@ -63,29 +101,14 @@ Item {
             return Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.18);
         }
 
-        // Inner Content Layer with synchronized fade and gentle scale
+        // Inner Content Container
         Item {
             anchors.centerIn: parent
             width: contentRow.implicitWidth
             height: contentRow.implicitHeight
 
-            opacity: root.isActive ? 1.0 : 0.0
-            scale: root.isActive ? 1.0 : 0.85
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 250
-                    easing.type: Easing.OutQuad
-                }
-            }
-
-            Behavior on scale {
-                NumberAnimation {
-                    duration: 350
-                    easing.type: Easing.OutBack
-                    easing.overshoot: 1.2
-                }
-            }
+            opacity: Math.max(0.0, Math.min(1.0, (compactRoot.animProgress - 0.25) / 0.75))
+            scale: 0.88 + (0.12 * compactRoot.animProgress)
 
             RowLayout {
                 id: contentRow
@@ -108,12 +131,6 @@ Item {
                         if (root.isBreak) return Kirigami.Theme.positiveTextColor;
                         if (root.timerStatus === "running") return Kirigami.Theme.highlightColor;
                         return Kirigami.Theme.textColor;
-                    }
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: 250
-                        }
                     }
                 }
 
