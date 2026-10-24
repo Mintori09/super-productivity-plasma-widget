@@ -2,6 +2,8 @@
 
 A lightweight, distraction-free KDE Plasma 6 widget (Plasmoid) to display and track Pomodoro sessions directly on your KDE panel, integrated with [Super Productivity](https://github.com/johannesjo/super-productivity).
 
+![Demo](docs/assets/demo.gif)
+
 ---
 
 ## Features
