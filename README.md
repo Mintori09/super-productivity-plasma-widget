@@ -41,7 +41,7 @@ A lightweight, distraction-free KDE Plasma 6 widget (Plasmoid) to display and tr
 Clone this repository and run the install script:
 
 ```bash
-git clone https://github.com/your-username/super-productivity-plasma-widget.git
+git clone https://github.com/Mintori09/super-productivity-plasma-widget.git
 cd super-productivity-plasma-widget
 ./install.sh
 ```
